@@ -61,8 +61,9 @@ local_rank = None
 
 
 def rank0_print(*args):
-    if local_rank == 0:
-        print(*args)
+    print(*args)
+    # if local_rank == 0:
+    #     print(*args)
 
 
 def safe_save_model_for_hf_trainer(trainer: transformers.Trainer, output_dir: str):
@@ -78,7 +79,7 @@ def preprocess(
     sources,
     tokenizer: transformers.PreTrainedTokenizer,
 ) -> Dict:
-    conv = get_conversation_template("vicuna")
+    conv = get_conversation_template("baichuan")
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 
     # Apply prompt templates
@@ -100,6 +101,7 @@ def preprocess(
         conversations,
         return_tensors="pt",
         padding="max_length",
+        #padding='longest',
         max_length=tokenizer.model_max_length,
         truncation=True,
     ).input_ids
@@ -107,27 +109,30 @@ def preprocess(
 
     assert conv.sep_style == SeparatorStyle.ADD_COLON_TWO
 
+    '''Prompter: Hello!RushBot: Hi!</s>Prompter: How are you?RushBot: I am fine</s>'''
     # Mask targets
     sep = conv.sep + conv.roles[1] + ": "
+    num = 0
     for conversation, target in zip(conversations, targets):
+        num += 1
+        if num % 1000 == 0:
+            rank0_print(f'formatted:{num}, total:{len(conversations)}')
         total_len = int(target.ne(tokenizer.pad_token_id).sum())
-
         rounds = conversation.split(conv.sep2)
-        cur_len = 1
-        target[:cur_len] = IGNORE_TOKEN_ID
+        ## 这里注意，ADD_COLON_TWO 开头有一个space空格，先把这个赋值成ignore
+        cur_len = 0
+        #rank0_print(f'conversation:{conversation}\ntoken:{tokenizer.tokenize(conversation)}\ntarget:{target}')
         for i, rou in enumerate(rounds):
             if rou == "":
                 break
-
             parts = rou.split(sep)
             if len(parts) != 2:
                 break
-            parts[0] += sep
-            round_len = len(tokenizer(rou).input_ids)
-            instruction_len = len(tokenizer(parts[0]).input_ids) - 2
-
+            parts[0] += sep 
+            instruction_len = len(tokenizer(parts[0]).input_ids)
             target[cur_len : cur_len + instruction_len] = IGNORE_TOKEN_ID
-
+            round_len = len(tokenizer(rou).input_ids) + 1 ## 让cur_len指向</s>的下一个
+            #rank0_print(f'cur_len:{cur_len}, round_len:{round_len}, instruction_len:{instruction_len}')
             cur_len += round_len
         target[cur_len:] = IGNORE_TOKEN_ID
 
@@ -214,7 +219,10 @@ def make_supervised_data_module(
         LazySupervisedDataset if data_args.lazy_preprocess else SupervisedDataset
     )
     rank0_print("Loading data...")
-    raw_data = json.load(open(data_args.data_path, "r"))
+    raw_data = []
+    with open(data_args.data_path, "r") as f:
+        for line in f:
+            raw_data.append(json.loads(line.strip()))
 
     # Split train/test
     np.random.seed(0)
@@ -233,7 +241,7 @@ def make_supervised_data_module(
 
 def train():
     global local_rank
-
+    rank0_print('============================================ start train =====================================')
     parser = transformers.HfArgumentParser(
         (ModelArguments, DataArguments, TrainingArguments)
     )
@@ -242,14 +250,18 @@ def train():
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
+        torch_dtype = torch.bfloat16,
+        trust_remote_code=True
     )
+    rank0_print('============================================load model finished=====================================')
     model.config.use_cache = False
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
         model_max_length=training_args.model_max_length,
         padding_side="right",
-        use_fast=False,
+        use_fast=True,
+        trust_remote_code=True
     )
     tokenizer.pad_token = tokenizer.unk_token
 

@@ -847,12 +847,36 @@ class BaichuanAdapter(BaseModelAdapter):
         return model, tokenizer
 
     def get_default_conv_template(self, model_path: str) -> Conversation:
-        return get_conv_template("one_shot")
+        return get_conv_template("MLRush")
 
+
+class MLRushAdapter(BaseModelAdapter):
+    """The model adapter for MLRush/baichuan-7B-chat"""
+
+    def match(self, model_path: str):
+        return "baichuan" in model_path
+
+    def load_model(self, model_path: str, from_pretrained_kwargs: dict):
+        config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_path, config=config, trust_remote_code=True
+        )
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            config=config,
+            trust_remote_code=True,
+            low_cpu_mem_usage=True,
+            **from_pretrained_kwargs,
+        )
+        return model, tokenizer
+
+    def get_default_conv_template(self, model_path: str) -> Conversation:
+        return get_conv_template("MLRush")
 
 # Note: the registration order matters.
 # The one registered earlier has a higher matching priority.
 register_model_adapter(VicunaAdapter)
+register_model_adapter(MLRushAdapter)
 register_model_adapter(T5Adapter)
 register_model_adapter(KoalaAdapter)
 register_model_adapter(AlpacaAdapter)

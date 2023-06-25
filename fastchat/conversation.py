@@ -267,6 +267,20 @@ register_conv_template(
     )
 )
 
+# MLRush template
+register_conv_template(
+    Conversation(
+        name="MLRush",
+        system='',
+        roles=("Prompter", "RushBot"),
+        messages=(),
+        offset=0,
+        sep_style=SeparatorStyle.ADD_COLON_TWO,
+        sep="",
+        sep2="</s>",
+    )
+)
+
 # Koala default template
 register_conv_template(
     Conversation(
@@ -659,9 +673,9 @@ register_conv_template(
 
 
 if __name__ == "__main__":
-    conv = get_conv_template("vicuna_v1.1")
+    conv = get_conv_template("MLRush")
     conv.append_message(conv.roles[0], "Hello!")
     conv.append_message(conv.roles[1], "Hi!")
     conv.append_message(conv.roles[0], "How are you?")
-    conv.append_message(conv.roles[1], None)
+    conv.append_message(conv.roles[1], 'I am fine')
     print(conv.get_prompt())
