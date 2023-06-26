@@ -250,8 +250,9 @@ def train():
     model = transformers.AutoModelForCausalLM.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
-        torch_dtype = torch.bfloat16,
-        trust_remote_code=True
+        torch_dtype = torch.float16,
+        trust_remote_code=True,
+        device_map="auto"
     )
     rank0_print('============================================load model finished=====================================')
     model.config.use_cache = False

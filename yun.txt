@@ -1,0 +1,16 @@
+apt install git
+sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
+sudo apt-get install git-lfs
+wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-x86_64.sh
+bash Miniconda3-latest-Linux-x86_64.sh
+pip install numpy
+
+git clone https://github.com/MLRushOrg/FastChat.git
+cd FastChat
+pip install setuptools_scm
+pip install -e .
+pip install transformers -U
+pip install deepspeed -U
+
+注意huggingface的cache，可能会让硬盘不够了。
+export TRANSFORMERS_CACHE=/blabla/cache/
