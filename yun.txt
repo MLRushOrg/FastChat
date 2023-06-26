@@ -1,30 +1,37 @@
+sudo apt update 
 sudo apt-get install make gcc -y
 sudo apt-get install zlib1g
 
 
 nvidia驱动：********************************************************
+'''
+apt install nvidia-utils-525
+check: nvidia-smi
+'''
+
 cd /tmp
 https://www.nvidia.com/en-us/drivers/unix/
-wget https://www.nvidia.com/content/DriverDownloads/confirmation.php?url=/tesla/525.105.17/NVIDIA-Linux-x86_64-525.105.17.run&lang=us&type=Tesla
-sudo sh NVIDIA-Linux-x86_64-450.57.run
+wget https://us.download.nvidia.com/tesla/525.105.17/NVIDIA-Linux-x86_64-525.105.17.run
+sudo sh NVIDIA-Linux-x86_64-525.105.17.run
 check: nvidia-smi 
 
 
 cuda：*****************************************************************
+###apt install nvidia-cuda-toolkit
 https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=Ubuntu&target_version=20.04&target_type=deb_network
 wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb
 sudo dpkg -i cuda-keyring_1.0-1_all.deb
 sudo apt-get update
 sudo apt-get -y install cuda
-
 .bashrc
-export PATH=/usr/local/cuda-12.0/bin:$PATH
-export LD_LIBRARY_PATH=/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH
+export PATH=/usr/local/cuda-12.1/bin:$PATH
+export LD_LIBRARY_PATH=/usr/local/cuda-12.1/lib64:$LD_LIBRARY_PATH
 check: nvcc --version
 
 
 cudnn:************************************************************
-cudnn-local-repo-ubuntu2004-8.9.2.26_1.0-1_amd64
+cat /usr/local/cuda/include/cudnn_version.h | grep CUDNN_MAJOR -A 2
+
 sudo apt-get install libcudnn8=8.9.2.26-1+cuda12.1
 sudo apt-get install libcudnn8-dev=8.9.2.26-1+cuda12.1
 sudo apt-get install libcudnn8-samples=8.9.2.26-1+cuda12.1
@@ -37,11 +44,11 @@ make clean && make
 
 
 apt install git
-sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
 sudo apt-get install git-lfs
+sudo apt install build-essential zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev wget libbz2-dev
 wget https://repo.anaconda.com/miniconda/Miniconda3-py310_23.3.1-0-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
-pip install numpy
+bash Miniconda3-py310_23.3.1-0-Linux-x86_64.sh
+
 
 git clone https://github.com/MLRushOrg/FastChat.git
 cd FastChat
@@ -52,3 +59,9 @@ pip install deepspeed -U
 
 注意huggingface的cache，可能会让硬盘不够了。
 export TRANSFORMERS_CACHE=/blabla/cache/
+
+按照下面的方式打通ssh链接，才可以git clone huggingface上的文件
+https://huggingface.co/docs/hub/security-git-ssh#generating-a-new-ssh-keypair
+git clone用ssh的链接
+
+https://discuss.huggingface.co/t/401-client-error-unauthorized-for-url/32466

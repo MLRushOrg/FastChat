@@ -1,4 +1,4 @@
-python /data/FastChat/fastchat/train/train.py \
+deepspeed --num_gpus=1 /data/FastChat/fastchat/train/train.py \
     --model_name_or_path baichuan-inc/baichuan-7B \
     --data_path /data/FastChat/data/test.json\
     --fp16 True \
@@ -18,7 +18,8 @@ python /data/FastChat/fastchat/train/train.py \
     --logging_steps 1 \
     --tf32 False \
     --model_max_length 2048 \
-    --gradient_checkpointing True
+    --gradient_checkpointing True \
+    --deepspeed /data/FastChat/playground/deepspeed_config_s2.json
 
 
 
